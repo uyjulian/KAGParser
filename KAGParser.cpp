@@ -9,8 +9,25 @@
 // KAG Parser Utility Class
 //---------------------------------------------------------------------------
 
+#include "ncbind/ncbind.hpp"
+#define NCB_MODULE_NAME TJS_W("KAGParser.dll")
+
+#ifndef USING_TP_STUB
+#include "tjsCommHead.h"
+#endif
 
 #include "KAGParser.h"
+#ifndef USING_TP_STUB
+#include "StorageIntf.h"
+#include "tjsDictionary.h"
+#include "MsgIntf.h"
+#include "DebugIntf.h"
+#include "ScriptMgnIntf.h"
+#include "tjsHashSearch.h"
+#include "TextStream.h"
+#include "tjsGlobalStringMap.h"
+#include "EventIntf.h"
+#endif
 
 
 //---------------------------------------------------------------------------
@@ -23,6 +40,7 @@
   acquire speed in compensation for ability of customizing.
 */
 //---------------------------------------------------------------------------
+#ifdef USING_TP_STUB
 //#define TJS_strchr			wcschr
 //#define TJS_strcmp			wcscmp
 //#define TJS_strncpy			wcsncpy_s
@@ -45,6 +63,7 @@ const tjs_char* TVPUnknownMacroName = TJS_W("マクロ \"%1\" は登録されて
 
 #define TJS_NATIVE_CLASSID_NAME ClassID_KAGParser
 static tjs_int32 TJS_NATIVE_CLASSID_NAME = -1;
+#endif
 //---------------------------------------------------------------------------
 // tTVPScenarioCacheItem : Scenario Cache Item
 //---------------------------------------------------------------------------
@@ -2267,15 +2286,24 @@ iTJSDispatch2 *tTJSNI_KAGParser::GetMacroTopNoAddRef() const
 
 
 
+#ifdef USING_TP_STUB
 static iTJSNativeInstance * TJS_INTF_METHOD Create_NI_KAGParser() {
 	return new tTJSNI_KAGParser();
 }
+#endif
 
 //---------------------------------------------------------------------------
 // tTJSNC_KAGParser : KAGParser TJS native class
 //---------------------------------------------------------------------------
+#ifndef USING_TP_STUB
+tjs_uint32 tTJSNC_KAGParser::ClassID = (tjs_uint32)-1;
+tTJSNC_KAGParser::tTJSNC_KAGParser() :
+	tTJSNativeClass(TJS_W("KAGParser"))
+{
+#else
 iTJSDispatch2 * TVPCreateNativeClass_KAGParser() {
 	tTJSNativeClassForPlugin * classobj = TJSCreateNativeClassForPlugin(TJS_W("KAGParser"), Create_NI_KAGParser);
+#endif
 	// register native methods/properties
 
 	TJS_BEGIN_NATIVE_MEMBERS(KAGParser)
@@ -2347,7 +2375,12 @@ TJS_BEGIN_NATIVE_METHOD_DECL(/*func. name*/assign)
 	if(clo.Object)
 	{
 		if(TJS_FAILED(clo.Object->NativeInstanceSupport(TJS_NIS_GETINSTANCE,
-			ClassID_KAGParser, (iTJSNativeInstance**)&src)))
+#ifdef USING_TP_STUB
+			ClassID_KAGParser, 
+#else
+			tTJSNC_KAGParser::ClassID,
+#endif
+			(iTJSNativeInstance**)&src)))
 			TVPThrowExceptionMessage(TVPKAGSpecifyKAGParser);
 	}
 	else
@@ -2643,11 +2676,40 @@ TJS_END_NATIVE_PROP_DECL(curLabel)
 
 //----------------------------------------------------------------------
 	TJS_END_NATIVE_MEMBERS
-	
+
+#ifdef USING_TP_STUB
 	return classobj;
 }
 #undef TJS_NATIVE_CLASSID_NAME
+#else
+}
 //---------------------------------------------------------------------------
+iTJSNativeInstance *tTJSNC_KAGParser::CreateNativeInstance()
+{
+	return new tTJSNI_KAGParser();
+}
+#endif
+//---------------------------------------------------------------------------
+
+
+#define REGISTER_OBJECT(classname, instance) \
+	dsp = (instance); \
+	val = tTJSVariant(dsp/*, dsp*/); \
+	dsp->Release(); \
+	global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W(#classname), NULL, \
+		&val, global);
+
+void InitPlugin_KAGParser() {
+	tTJSVariant val;
+    iTJSDispatch2 *dsp;
+    iTJSDispatch2 * global = TVPGetScriptDispatch();
+
+    if (global) {
+        REGISTER_OBJECT(KAGParser, new tTJSNC_KAGParser());
+    }
+}
+
+NCB_PRE_REGIST_CALLBACK(InitPlugin_KAGParser);
 
 
 
